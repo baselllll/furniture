@@ -7,10 +7,11 @@ use \App\Http\Controllers\ProductController;
 
 
 
+Route::post('/register', [UserController::class, 'register']);
+
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix'=> 'auth'],function (){
         Route::post('/login', [UserController::class, 'login']);
-        Route::post('/register', [UserController::class, 'register']);
         Route::post('/logout', [UserController::class, 'logout']);
         Route::get('/user-profile', [UserController::class, 'userProfile']);
     });
