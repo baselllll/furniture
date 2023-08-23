@@ -8,40 +8,34 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
-    /**
-     * Create a new AuthController instance.
-     *
-     * @return void
-     */
-    public function __construct() {
-
-    }
-    /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function login(Request $request){
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-        $user = User::where('email',$request->email)->first();
-        $token = $user->createToken('furniture')->plainTextToken;
-       if (!isset($user)) {
-            // If authentication fails
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string|min:6',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+            $user = User::whereEmail($request->email)->first();
+            $token = $user->createToken('furniture')->plainTextToken;
+            if (!isset($user)) {
+                // If authentication fails
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to authenticate after registration',
+                ], 401);
+            }
+            return response()->json([
+                'user' => $user,
+                'token' => $token
+            ]);
+        }catch (\Exception $exception){
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to authenticate after registration',
+                'message' => $exception->getMessage(),
             ], 401);
         }
-        return response()->json([
-            'user' => auth()->user(),
-            'token' => $token
-        ]);
     }
     /**
      * Register a User.
