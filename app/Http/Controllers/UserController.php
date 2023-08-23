@@ -62,11 +62,11 @@ class UserController extends Controller
             $validator->validated(),
             ['password' => bcrypt($request->password)]
         ));
-        $token = $user->createToken('furniture')->plainTextToken;
+//        $token = $user->createToken('furniture')->plainTextToken;
         return response()->json([
             'message' => 'User successfully registered',
             'user' => $user,
-            'token' => $token
+//            'token' => $token
         ], 201);
     }
 
