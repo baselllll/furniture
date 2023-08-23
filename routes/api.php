@@ -12,7 +12,6 @@ Route::post('/login', [UserController::class, 'login']);
 
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::post('/login', [UserController::class, 'login']);
     Route::post('/logout', [UserController::class, 'logout']);
     Route::get('/user-profile', [UserController::class, 'userProfile']);
     Route::group(['prefix'=> 'services'],function (){
