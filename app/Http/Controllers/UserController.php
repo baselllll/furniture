@@ -3,11 +3,34 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
+    public function updateUser($user_id,Request $request){
+        $request['user_id']= $user_id;
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|exists:users,id',
+            ]);
+            if($validator->fails()){
+                return response()->json(["error"=>$validator->errors()], 400);
+            }
+            $user = User::find($user_id)->update($request->all());
+            return response()->json([
+                'status' => true,
+                'message' => "success updated",
+            ], 200);
+        }catch (\Exception $exception){
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => $exception->getMessage(),
+            ], 401);
+        }
+    }
     public function login(Request $request){
         try {
             $validator = Validator::make($request->all(), [
@@ -15,10 +38,13 @@ class UserController extends Controller
                 'password' => 'required|string|min:6',
             ]);
             if ($validator->fails()) {
-                return response()->json($validator->errors(), 422);
+                return response()->json(["error"=>$validator->errors()], 400);
             }
             $user = User::whereEmail($request->email)->first();
-            $token = $user->createToken('furniture')->plainTextToken;
+            if(isset($user)){
+                $token = $user->createToken('furniture')->plainTextToken;
+            }
+
             if (!isset($user)) {
                 // If authentication fails
                 return response()->json([

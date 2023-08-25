@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -74,6 +75,47 @@ class ProductController extends Controller
             return response()->json([
                 'error' => $exception->getMessage()
             ],500);
+        }
+    }
+    public function getproductsBy($selectType,Request $request)
+    {
+        $request['selectType']= $selectType;
+        $sended_value = $request->sended_value;
+        try {
+            $validator = Validator::make($request->all(), [
+                'selectType' => 'in:name,priceLtH,priceHtL,type,brand',
+                'sended_value'=>'required'
+            ]);
+            if ($validator->fails()) {
+                return response()->json(["error" => $validator->errors()], 400);
+            }
+
+
+            $query = Product::query();
+
+            $query->when($selectType == 'name', function ($q) use ($sended_value) {
+                $q->where('name','like',$sended_value);
+            });
+            $query->when($selectType == 'priceLtH', function ($q) {
+                $q->orderBy('price', 'asc');
+            });
+            $query->when($selectType == 'priceHtL', function ($q) {
+                $q->orderBy('price', 'desc');
+            });
+            $query->when($selectType == 'type', function ($q) use ($sended_value) {
+                $q->where('type','=',$sended_value);
+            });
+            $query->when($selectType == 'brand', function ($q) use ($sended_value) {
+                $q->where('brand','=',$sended_value);
+            });
+            $products = $query->paginate(15);
+            return response()->json([
+                'data' => $products
+            ],200);
+        }catch (\Exception $exception){
+            return response()->json([
+                'error' => $exception->getMessage()
+            ],200);
         }
     }
    public function ProductsLoginedUsers()
