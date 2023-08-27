@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -25,16 +26,6 @@ class ProductController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        Product::create(['']);
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -42,7 +33,42 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $loggedInUser = Auth::user();
+        $setOfProducts = $request->productsItems;
+        if (isset($setOfProducts)){
+            foreach ($setOfProducts as $item){
+                $product = Product::create(
+                    [
+                        'price' => $item['price'],
+                        'quantity'=> $item['quantity'],
+                        'discount' => $item['discount'],
+                        'name' => $item['name'],
+                        'brand' => $item['brand'],
+                        'type' => $item['type'],
+                        'status' => $item['status'],
+                        'featured' => $item['featured'],
+                    ]
+                );
+
+                $product->addMedia($item['image'])
+                    ->preservingOriginal()
+                    ->toMediaCollection('image');
+                $loggedInUser->products()->save($product);
+            }
+        }
+        return response()->json([
+            'message' => 'succefully created'
+        ],200);
+
+
+//        //update
+//        $product->clearMediaCollection('image');
+//        //Config::set('media-library.prefix', 'uploads/product');
+//        $product->addMedia($file)
+//            ->preservingOriginal()
+//            ->toMediaCollection('image');
+
+
     }
 
     /**
@@ -55,6 +81,7 @@ class ProductController extends Controller
     {
         try {
             $product = new ProductResource(Product::where('id',$id)->first());
+
             return response()->json([
                 'products' => $product
             ],200);

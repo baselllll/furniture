@@ -26,6 +26,7 @@ class ProductResource extends JsonResource
             "featured"=> $this->featured,
             "created_at"=> $this->created_at,
             "updated_at"=> $this->updated_at,
+            'image_url' => optional(optional($this->getMedia('image'))->first())->getFullUrl(),
         ];
     }
 }
