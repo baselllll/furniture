@@ -17,13 +17,35 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = ProductResource::collection(Product::with('users')->paginate(15));
+        $page_size = $request->page_size ?? 15;
+        $page_number = $request->page_number ?? 1;
+
+        if ($page_size === 'all' && $page_number === 'all') {
+            // Fetch all products without pagination
+            $products = Product::with('users')->get();
+
+            return response()->json([
+                'products' => ProductResource::collection($products),
+            ], 200);
+        }
+
+        // Fetch paginated products if page_size and page_number are provided
+        $products = Product::with('users')->paginate($page_size, ['*'], 'page', $page_number);
+
         return response()->json([
-            'products' => $products
-        ],200);
+            'products' => ProductResource::collection($products->items()),
+            'pagination' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+            ],
+        ], 200);
     }
+
+
 
     /**
      * Store a newly created resource in storage.
