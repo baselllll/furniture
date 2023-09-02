@@ -182,37 +182,45 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product)
+
+    public function update(Request  $request, $id)
     {
-        //
+        $loggedInUser = Auth::user();
+                $product = Product::find($id);
+                if ($product) {
+                    $product->update([
+                        'price' => $request['price'],
+                        'quantity' => $request['quantity'],
+                        'discount' => $request['discount'],
+                        'name' => $request['name'],
+                        'brand' => $request['brand'],
+                        'type' => $request['type'],
+                        'status' => $request['status'],
+                        'featured' => $request['featured'],
+                    ]);
+                }
+                $product->clearMediaCollection('image');
+                $product->addMedia($request['image'])
+                    ->preservingOriginal()
+                    ->toMediaCollection('image');
+                $loggedInUser->products()->save($product);
+
+        return response()->json([
+            'message' => 'succefully updated'
+        ],200);
+
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Product $product)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Product $product)
-    {
-        //
+        try {
+            $product = Product::find($id);
+            $product->delete();
+            return response()->json([
+                'message' => 'succefully deleted'
+            ],200);
+        }catch (\Exception $exception){
+            return $exception->getMessage();
+        }
     }
 }

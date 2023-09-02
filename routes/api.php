@@ -17,6 +17,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/update-user/{user_id}', [UserController::class, 'updateUser']);
     Route::group(['prefix'=> 'services'],function (){
         Route::resource('products', ProductController::class);
+        Route::post('update-product/{id}', [ProductController::class,'update']);
         Route::get('products-logined-users', [ProductController::class,'ProductsLoginedUsers']);
         Route::get('products-featured', [ProductController::class,'ProductFeatured']);
 
