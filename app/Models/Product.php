@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia\HasMedia;
 use Spatie\MediaLibrary\HasMedia\HasMediaTrait;
+use Spatie\Translatable\HasTranslations;
 
 class Product extends Model implements HasMedia
 {
     use HasFactory;
+    use HasTranslations;
     use HasMediaTrait;
+    public $translatable = ['name','brand','type','status','description'];
     protected $fillable =
         [
             'price',
@@ -21,6 +24,7 @@ class Product extends Model implements HasMedia
             'type',
             'status',
             'featured',
+            'description'
         ];
     public function users()
     {

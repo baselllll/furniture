@@ -64,11 +64,28 @@ class ProductController extends Controller
                         'price' => $item['price'],
                         'quantity'=> $item['quantity'],
                         'discount' => $item['discount'],
-                        'name' => $item['name'],
-                        'brand' => $item['brand'],
-                        'type' => $item['type'],
-                        'status' => $item['status'],
                         'featured' => $item['featured'],
+                        'name' => [
+                            'ar' => $item['ar_name'],
+                            'en' => $item['en_name']
+                        ],
+                        'brand' => [
+                            'ar' => $item['ar_brand'],
+                            'en' => $item['en_brand']
+                        ],
+                        'type' => [
+                            'ar' => $item['ar_type'],
+                            'en' => $item['en_type']
+                        ],
+                        'status' => [
+                            'ar' => $item['ar_status'],
+                            'en' => $item['en_status']
+                        ],
+                        'description' => [
+                            'ar' => $item['ar_description'],
+                            'en' => $item['en_description']
+                        ],
+
                     ]
                 );
 
