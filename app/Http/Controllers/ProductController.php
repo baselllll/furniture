@@ -24,7 +24,7 @@ class ProductController extends Controller
 
         if ($page_size === 'all' && $page_number === 'all') {
             // Fetch all products without pagination
-            $products = Product::with('users')->get();
+            $products = Product::with('users','category')->get();
 
             return response()->json([
                 'products' => ProductResource::collection($products),
@@ -65,6 +65,7 @@ class ProductController extends Controller
                         'quantity'=> $item['quantity'],
                         'discount' => $item['discount'],
                         'featured' => $item['featured'],
+                        'category_id'=>$item['category_id'],
                         'name' => [
                             'ar' => $item['ar_name'],
                             'en' => $item['en_name']
@@ -149,7 +150,7 @@ class ProductController extends Controller
         $sended_value = $request->sended_value;
         try {
             $validator = Validator::make($request->all(), [
-                'selectType' => 'in:name,priceLtH,priceHtL,type,brand',
+                'selectType' => 'in:name,priceLtH,priceHtL,type,brand,category_id',
                 'sended_value'=>'required'
             ]);
             if ($validator->fails()) {
@@ -161,6 +162,9 @@ class ProductController extends Controller
 
             $query->when($selectType == 'name', function ($q) use ($sended_value) {
                 $q->where('name','like',$sended_value);
+            });
+            $query->when($selectType == 'category_id', function ($q) use ($sended_value) {
+                $q->where('category_id',$sended_value);
             });
             $query->when($selectType == 'priceLtH', function ($q) {
                 $q->orderBy('price', 'asc');
@@ -209,6 +213,7 @@ class ProductController extends Controller
                         'price' => $request['price'],
                         'quantity' => $request['quantity'],
                         'discount' => $request['discount'],
+                        'category_id'=>$request['category_id'],
                         'name' => $request['name'],
                         'brand' => $request['brand'],
                         'type' => $request['type'],

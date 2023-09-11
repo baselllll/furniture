@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('type')->nullable();
             $table->string('status');
             $table->boolean('featured');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

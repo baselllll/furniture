@@ -17,6 +17,7 @@ class Product extends Model implements HasMedia
     protected $fillable =
         [
             'price',
+            'category_id',
             'quantity',
             'discount',
             'name',
@@ -29,5 +30,8 @@ class Product extends Model implements HasMedia
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_products');
+    }
+    public function category(){
+        return $this->belongsTo(Category::class,'category_id');
     }
 }
