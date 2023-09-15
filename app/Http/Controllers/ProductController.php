@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -55,60 +56,106 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $loggedInUser = Auth::user();
-        $setOfProducts = $request->productsItems;
-        if (isset($setOfProducts)){
-            foreach ($setOfProducts as $item){
+        try {
+            $loggedInUser = Auth::user();
+            $setOfProducts = $request->productsItems;
+            if (isset($setOfProducts)) {
+                foreach ($setOfProducts as $item) {
+                    $item['ar_status']  =  isset($item['ar_status']) ? $item['ar_status'] : '';
+                    $item['en_status'] = isset($item['en_status']) ? $item['en_status'] : '';
+                    $item['category_id']  =  isset($item['category_id']) ? $item['category_id'] : '';
+                    $item['ar_status'] = "";
+                    $item['en_status'] = "";
+                    $product = Product::create(
+                        [
+                            'price' => $item['price'],
+                            'quantity' => $item['quantity'],
+                            'discount' => $item['discount'],
+                            'featured' => $item['featured'],
+                            'category_id' => $item['category_id'],
+                            'name' => [
+                                'ar' => $item['ar_name'],
+                                'en' => $item['en_name']
+                            ],
+                            'brand' => [
+                                'ar' => $item['ar_brand'],
+                                'en' => $item['en_brand']
+                            ],
+                            'type' => [
+                                'ar' => $item['ar_type'],
+                                'en' => $item['en_type']
+                            ],
+                            'status' => [
+                                'ar' => $item['ar_status'],
+                                'en' => $item['en_status']
+                            ],
+                            'description' => [
+                                'ar' => $item['ar_description'],
+                                'en' => $item['en_description']
+                            ],
+
+                        ]
+                    );
+                    if(isset($item['image'])){
+                        $item->addMedia($item['image'])
+                            ->preservingOriginal()
+                            ->toMediaCollection('image');
+                    }
+                    $loggedInUser->products()->save($product);
+
+
+                }
+            } else {
+                isset($request['ar_status']) ? $request['ar_status'] : '';
+                isset($request['ar_status']) ? $request['en_status'] : '';
+                $request['ar_status'] = "";
+                $request['en_status'] = "";
                 $product = Product::create(
                     [
-                        'price' => $item['price'],
-                        'quantity'=> $item['quantity'],
-                        'discount' => $item['discount'],
-                        'featured' => $item['featured'],
-                        'category_id'=>$item['category_id'],
+                        'price' => $request['price'],
+                        'quantity' => $request['quantity'],
+                        'discount' => $request['discount'],
+                        'featured' => $request['featured'] == false ? 0 : 1,
+                        'category_id' => isset($request['category_id']) ? $request['category_id'] : '',
                         'name' => [
-                            'ar' => $item['ar_name'],
-                            'en' => $item['en_name']
+                            'ar' => $request['ar_name'],
+                            'en' => $request['en_name']
                         ],
                         'brand' => [
-                            'ar' => $item['ar_brand'],
-                            'en' => $item['en_brand']
+                            'ar' => $request['ar_brand'],
+                            'en' => $request['en_brand']
                         ],
                         'type' => [
-                            'ar' => $item['ar_type'],
-                            'en' => $item['en_type']
+                            'ar' => $request['ar_type'],
+                            'en' => $request['en_type']
                         ],
                         'status' => [
-                            'ar' => $item['ar_status'],
-                            'en' => $item['en_status']
+                            'ar' => $request['ar_status'],
+                            'en' => $request['en_status']
                         ],
                         'description' => [
-                            'ar' => $item['ar_description'],
-                            'en' => $item['en_description']
+                            'ar' => $request['ar_description'],
+                            'en' => $request['en_description']
                         ],
 
                     ]
                 );
-
-                $product->addMedia($item['image'])
-                    ->preservingOriginal()
-                    ->toMediaCollection('image');
+                if (isset($request['image'])) {
+                    $product->addMedia($request['image'])
+                        ->preservingOriginal()
+                        ->toMediaCollection('image');
+                }
                 $loggedInUser->products()->save($product);
             }
+            return response()->json([
+                'status' => 'successfully created'
+            ],200);
+        }catch (\Exception $exception){
+            DB::rollBack();
+            return response()->json([
+                'error' => $exception->getMessage()
+            ],500);
         }
-        return response()->json([
-            'message' => 'succefully created'
-        ],200);
-
-
-//        //update
-//        $product->clearMediaCollection('image');
-//        //Config::set('media-library.prefix', 'uploads/product');
-//        $product->addMedia($file)
-//            ->preservingOriginal()
-//            ->toMediaCollection('image');
-
-
     }
 
     /**
@@ -148,23 +195,23 @@ class ProductController extends Controller
     {
         $request['selectType']= $selectType;
         $sended_value = $request->sended_value;
+        $category_ids = $request->category_ids;
         try {
             $validator = Validator::make($request->all(), [
-                'selectType' => 'in:name,priceLtH,priceHtL,type,brand,category_id',
-                'sended_value'=>'required'
+                'selectType' => 'in:name,priceLtH,priceHtL,type,brand,category',
+                'sended_value'=>'required',
+                'category_ids'=>'array|required_if:selectType,==,category'
             ]);
             if ($validator->fails()) {
                 return response()->json(["error" => $validator->errors()], 400);
             }
-
-
             $query = Product::query();
 
             $query->when($selectType == 'name', function ($q) use ($sended_value) {
                 $q->where('name','like',$sended_value);
             });
-            $query->when($selectType == 'category_id', function ($q) use ($sended_value) {
-                $q->where('category_id',$sended_value);
+            $query->when($selectType == 'category', function ($q) use ($category_ids) {
+                $q->whereIn('category_id', $category_ids);
             });
             $query->when($selectType == 'priceLtH', function ($q) {
                 $q->orderBy('price', 'asc');
@@ -188,7 +235,7 @@ class ProductController extends Controller
             ],200);
         }
     }
-   public function ProductsLoginedUsers()
+    public function ProductsLoginedUsers()
     {
         try {
             $user = User::with('products')->where('id',auth()->user()->id)->first();
@@ -207,25 +254,25 @@ class ProductController extends Controller
     public function update(Request  $request, $id)
     {
         $loggedInUser = Auth::user();
-                $product = Product::find($id);
-                if ($product) {
-                    $product->update([
-                        'price' => $request['price'],
-                        'quantity' => $request['quantity'],
-                        'discount' => $request['discount'],
-                        'category_id'=>$request['category_id'],
-                        'name' => $request['name'],
-                        'brand' => $request['brand'],
-                        'type' => $request['type'],
-                        'status' => $request['status'],
-                        'featured' => $request['featured'],
-                    ]);
-                }
-                $product->clearMediaCollection('image');
-                $product->addMedia($request['image'])
-                    ->preservingOriginal()
-                    ->toMediaCollection('image');
-                $loggedInUser->products()->save($product);
+        $product = Product::find($id);
+        if ($product) {
+            $product->update([
+                'price' => $request['price'],
+                'quantity' => $request['quantity'],
+                'discount' => $request['discount'],
+                'category_id'=>$request['category_id'],
+                'name' => $request['name'],
+                'brand' => $request['brand'],
+                'type' => $request['type'],
+                'status' => $request['status'],
+                'featured' => $request['featured'],
+            ]);
+        }
+        $product->clearMediaCollection('image');
+        $product->addMedia($request['image'])
+            ->preservingOriginal()
+            ->toMediaCollection('image');
+        $loggedInUser->products()->save($product);
 
         return response()->json([
             'message' => 'succefully updated'
