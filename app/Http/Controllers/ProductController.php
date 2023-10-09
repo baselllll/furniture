@@ -167,7 +167,7 @@ class ProductController extends Controller
     public function show($id)
     {
         try {
-            $product = new ProductResource(Product::where('id',$id)->first());
+            $product = new ProductResource(Product::with('category')->where('id',$id)->first());
 
             return response()->json([
                 'products' => $product
@@ -199,7 +199,7 @@ class ProductController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'selectType' => 'in:name,priceLtH,priceHtL,type,brand,category',
-                'sended_value'=>'required',
+                'sended_value'=>'sometimes',
                 'category_ids'=>'array|required_if:selectType,==,category'
             ]);
             if ($validator->fails()) {
@@ -226,6 +226,8 @@ class ProductController extends Controller
                 $q->where('brand','=',$sended_value);
             });
             $products = $query->paginate(15);
+            $products = ProductResource::collection($products);
+
             return response()->json([
                 'data' => $products
             ],200);
